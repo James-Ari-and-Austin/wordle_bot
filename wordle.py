@@ -24,18 +24,18 @@ guess = input("Enter your guess: ")
 
 #Function Definition
 def compare(word):
+    checkWord = list(answer)
     hits = []
     for i in range(len(word)):
-        j = 0
-        print("cycle: {0} {1} {2}".format(i, word[i], answer[i] ))
-        if word[i] == answer[i]:
-            j = j + 1
-            print("hit")
-        if word[i] in answer:
-            j = j + 1
-        hits.append(j)
+        if word[i] == checkWord[i]:
+            checkWord[i] = 0
+            hits.append(2)
+        else:
+            hits.append(0)
+    for i in range(len(word[i])):
+        if word[i] in checkWord:
+            hits[i] = 1
     return hits
 
 print(compare(guess))
 print(answer)
-print(guess)
