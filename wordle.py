@@ -20,7 +20,6 @@ for row in guess_words_csv:
 
 #Determine words
 answer = answer_words_list[random.randrange(len(answer_words_list))]
-guess = input("Enter your guess: ")
 
 #Function Definition
 def compare(word):
@@ -32,10 +31,30 @@ def compare(word):
             hits.append(2)
         else:
             hits.append(0)
-    for i in range(len(word[i])):
+    for i in range(len(word)):
         if word[i] in checkWord:
             hits[i] = 1
     return hits
 
-print(compare(guess))
-print(answer)
+def checkWin(hits):
+    if 0 in hits or 1 in hits:
+        return False
+    else:
+        return True
+
+def getGuess():
+    end = False
+    while end == False:
+        guess = input()
+        if len(guess) != 5 or guess not in guess_words_list:
+            print("Word Error")
+        else:
+            end = True
+    return guess
+
+def main():
+    guess = getGuess()
+    print(compare(guess))
+    print(answer)
+
+main()
