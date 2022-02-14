@@ -1,5 +1,7 @@
 import csv
 import random
+import string
+from termcolor import colored
 
 #Open the Word Lists
 file = open("word_libraries/answer_words.csv")
@@ -19,21 +21,23 @@ for row in guess_words_csv:
     guess_words_list.append(word)
 
 #Determine words
-answer = answer_words_list[random.randrange(len(answer_words_list))]
+answer = answer_words_list[random.randrange(len(answer_words_list))].upper()
 
 #Function Definition
 def compare(word):
     checkWord = list(answer)
+    guess = list(word)
     hits = []
     for i in range(len(word)):
-        if word[i] == checkWord[i]:
-            checkWord[i] = 0
+        if guess[i] == checkWord[i]:
+            guess[i] = 0
             hits.append(2)
         else:
             hits.append(0)
     for i in range(len(word)):
-        if word[i] in checkWord:
+        if guess[i] in checkWord:
             hits[i] = 1
+            guess[i] = 0
     return hits
 
 def checkWin(hits):
@@ -45,16 +49,32 @@ def checkWin(hits):
 def getGuess():
     end = False
     while end == False:
-        guess = input()
-        if len(guess) != 5 or guess not in guess_words_list:
+        guess = input().upper()
+        if len(guess) != 5 or guess.lower() not in guess_words_list:
             print("Word Error")
         else:
             end = True
     return guess
 
-def main():
-    guess = getGuess()
-    print(compare(guess))
-    print(answer)
+def returnGuess(hits, guess):
+    for i in range(len(hits)):
+        if hits[i] == 2:
+            print(colored(guess[i], 'grey', 'on_green'), end = "")
+        elif hits[i] == 1:
+            print(colored(guess[i], 'grey', 'on_yellow'), end = "")
+        else:
+            print(guess[i], end = "")
+    print("", end = "\n")
 
+
+def main():
+    for cycle in range(5):
+        guess = getGuess()
+        hits = compare(guess)
+        returnGuess(hits, guess)
+        if checkWin(hits) == True:
+            print("You got the wordle!")
+            exit()
+    print("You did not get the wordle! It was {0}".format(answer))
+    exit()
 main()
