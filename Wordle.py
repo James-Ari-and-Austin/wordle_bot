@@ -8,10 +8,13 @@ file = open("word_libraries/answer_words.csv")
 answer_words_csv = csv.reader(file)
 file = open("word_libraries/guess_words.csv")
 guess_words_csv = csv.reader(file)
+file = open("word_libraries/letters.csv")
+letters_csv = csv.reader(file)
 
 #Create the Word Lists
 answer_words_list = []
 guess_words_list = []
+letters_list = []
 for row in answer_words_csv:
     word = str(row)[2:-2]
     answer_words_list.append(word)
@@ -19,9 +22,12 @@ for row in answer_words_csv:
 for row in guess_words_csv:
     word = str(row)[2:-2]
     guess_words_list.append(word)
+for row in letters_csv:
+    letter = str(row)[2:-2]
+    letters_list.append(letter)
 
 #Determine words
-answer = answer_words_list[random.randrange(len(answer_words_list))].upper()
+answer = answer_words_list[random.randrange(len(answer_words_list))]
 
 #Function Definition
 def createLetterImg(color, letter):
@@ -60,8 +66,10 @@ def checkWin(hits):
 def getGuess():
     end = False
     while end == False:
-        guess = input().upper()
-        if len(guess) != 5 or guess.lower() not in guess_words_list:
+        guess = input()
+        if guess ==  '.' or guess == ',':
+            return guess
+        elif len(guess) != 1 or guess not in letters_list:
             print("Word Error")
         else:
             end = True
@@ -70,22 +78,40 @@ def getGuess():
 def returnGuess(hits, guess, cycle, img):
     for i in range(len(hits)):
         if hits[i] == 2:
-            letterImg = createLetterImg("Green", guess[i])
+            letterImg = createLetterImg("Green", guess[i].upper())
 
         elif hits[i] == 1:
-            letterImg = createLetterImg("Yellow", guess[i])
+            letterImg = createLetterImg("Yellow", guess[i].upper())
         else:
-            letterImg = createLetterImg("Gray", guess[i])
+            letterImg = createLetterImg("Gray", guess[i].upper())
         img = addLetter(i + 1, cycle + 1, img, letterImg)
     ImageShow.show(img)
 
+def runRow(img, row):
+    word = []
+    while True:
+        guess = getGuess()
+        if len(word) == 5 and ''.join(word) in guess_words_list and guess == '.':
+            return ''.join(word)
+        elif guess in letters_list and len(word) < 5:
+            guess = guess.upper()
+            word.append(guess.lower())
+            letterImg = createLetterImg("Gray", guess)
+            img = addLetter(len(word), row + 1, img, letterImg)
+        elif guess == ',' and len(word) > 0:
+            word.pop()
+            letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
+            img = addLetter(len(word) + 1, row + 1, img, letterImg)
+        ImageShow.show(img)
 
 def main():
     img = Image.open("Images/WordleTemplate.jpeg")
-    for cycle in range(5):
-        guess = getGuess()
-        hits = compare(guess)
-        returnGuess(hits, guess, cycle, img)
+    for row in range(6):
+        word = runRow(img, row).lower()
+        print(answer)
+        hits = compare(word)
+        print(hits)
+        returnGuess(hits, word, row, img)
         if checkWin(hits) == True:
             print("You got the wordle!")
             exit()
