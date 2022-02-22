@@ -3,39 +3,13 @@ import random
 import string
 from PIL import Image, ImageShow
 
-#Open the Word Lists
-file = open("word_libraries/answer_words.csv")
-answer_words_csv = csv.reader(file)
-file = open("word_libraries/guess_words.csv")
-guess_words_csv = csv.reader(file)
-file = open("word_libraries/letters.csv")
-letters_csv = csv.reader(file)
-
-#Create the Word Lists
-answer_words_list = []
-guess_words_list = []
-letters_list = []
-for row in answer_words_csv:
-    word = str(row)[2:-2]
-    answer_words_list.append(word)
-    guess_words_list.append(word)
-for row in guess_words_csv:
-    word = str(row)[2:-2]
-    guess_words_list.append(word)
-for row in letters_csv:
-    letter = str(row)[2:-2]
-    letters_list.append(letter)
-
-#Determine words
-answer = answer_words_list[random.randrange(len(answer_words_list))]
-
 #Function Definition
 def createLetterImg(color, letter):
     letterImg = Image.open("Images/Tiles/Wordle {0}/{1}.jpeg".format(color, letter))
     letterImg = letterImg.resize((77,76))
     return letterImg
 
-def addLetter(column, row, img, letterImg):
+def addLetter(column, row, letterImg):
     x = (column - 1) * 87 + 38
     y = (row - 1) * 87 + 43 + round((row * 0.55))
     img.paste(letterImg, (x,y))
@@ -75,7 +49,7 @@ def getGuess():
             end = True
     return guess
 
-def returnGuess(hits, guess, cycle, img):
+def returnGuess(hits, guess, cycle):
     for i in range(len(hits)):
         if hits[i] == 2:
             letterImg = createLetterImg("Green", guess[i].upper())
@@ -84,10 +58,10 @@ def returnGuess(hits, guess, cycle, img):
             letterImg = createLetterImg("Yellow", guess[i].upper())
         else:
             letterImg = createLetterImg("Gray", guess[i].upper())
-        img = addLetter(i + 1, cycle + 1, img, letterImg)
+        img = addLetter(i + 1, cycle + 1, letterImg)
     ImageShow.show(img)
 
-def runRow(img, row):
+def runRow(row):
     word = []
     while True:
         guess = getGuess()
@@ -97,24 +71,60 @@ def runRow(img, row):
             guess = guess.upper()
             word.append(guess.lower())
             letterImg = createLetterImg("Gray", guess)
-            img = addLetter(len(word), row + 1, img, letterImg)
+            img = addLetter(len(word), row + 1, letterImg)
         elif guess == ',' and len(word) > 0:
             word.pop()
             letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
-            img = addLetter(len(word) + 1, row + 1, img, letterImg)
+            img = addLetter(len(word) + 1, row + 1, letterImg)
         ImageShow.show(img)
 
 def main():
+
+    #Create the Blank Image
+    global img
     img = Image.open("Images/WordleTemplate.jpeg")
+
+    #Open the Word CSVs
+    file = open("word_libraries/answer_words.csv")
+    answer_words_csv = csv.reader(file)
+    file = open("word_libraries/guess_words.csv")
+    guess_words_csv = csv.reader(file)
+    file = open("word_libraries/letters.csv")
+    letters_csv = csv.reader(file)
+
+    #Create the Word Lists
+    global answer_words_list
+    answer_words_list = []
+    global guess_words_list
+    guess_words_list = []
+    global letters_list
+    letters_list = []
+    for row in answer_words_csv:
+        word = str(row)[2:-2]
+        answer_words_list.append(word)
+        guess_words_list.append(word)
+    for row in guess_words_csv:
+        word = str(row)[2:-2]
+        guess_words_list.append(word)
+    for row in letters_csv:
+        letter = str(row)[2:-2]
+        letters_list.append(letter)
+
+    #Determines the answer word
+    global answer
+    answer = answer_words_list[random.randrange(len(answer_words_list))]
+
+    #Runs the game, row by row
     for row in range(6):
-        word = runRow(img, row).lower()
+        word = runRow(row).lower()
         print(answer)
         hits = compare(word)
         print(hits)
-        returnGuess(hits, word, row, img)
+        returnGuess(hits, word, row)
         if checkWin(hits) == True:
             print("You got the wordle!")
             exit()
     print("You did not get the wordle! It was {0}".format(answer))
     exit()
-main()
+if __name__ == "__main__":
+    main()
