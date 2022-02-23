@@ -55,6 +55,11 @@ async def wordle(ctx):
     global answer
     answer = answer_words_list[random.randrange(len(answer_words_list))]
 
+    #Send initial messages
+    file = discord.File(fp = mem, filename = 'blank.png')
+    await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
+    imgMsg = await ctx.send(file = file)
+
     #Create Wordle Class
     class wordleClass(object):
         def __init__(self, input):
@@ -90,6 +95,7 @@ async def wordle(ctx):
                 self.img= wordle.addLetter(len(self.word) + 1, self.gameRow + 1, letterImg)
             print(''.join(self.word))
             ImageShow.show(self.img)
+            wordle.editImgMsg(self.img)
 
         def createLetterImg(self, color, letter):
             letterImg = Image.open("Images/Tiles/Wordle {0}/{1}.jpeg".format(color, letter))
@@ -136,6 +142,14 @@ async def wordle(ctx):
                 self.img= wordle.addLetter(i + 1, cycle, letterImg)
             ImageShow.show(self.img)
 
+        @staticmethod
+        def editImgMsg(newImg):
+            mem = io.BytesIO()
+            newImg.save(mem, format='PNG')
+            mem.seek(0)
+            file = discord.File(fp = mem, filename = 'blank.png')
+            imgMsg.edit(file = file)
+
     #Create input Class
     class inputClass(object): #This runs when an object is initialized with this class
 
@@ -159,12 +173,6 @@ async def wordle(ctx):
     #Create Objects based on the classes
     input = inputClass()
     wordle = wordleClass(input)
-
-
-    #Send initial Message
-    file = discord.File(fp = mem, filename = 'blank.png')
-    await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
-    imgMsg = await ctx.send(file = file)
 
     #Create Buttons
     x = 26
