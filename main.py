@@ -157,6 +157,14 @@ async def wordle(ctx):
     view.add_item(buttons[27])
     await ctx.send(view = view)
 
+    #Create Wordle Class
+    class wordleClass(object):
+        def __init__(self, input):
+            self.input = input
+            self.input.bind_to(self.advanceWordle)
+        def advanceWordle(self, buttonNum):
+            print("wordle advanced")
+            print(buttonNum)
     #Create input Class
     class inputClass(object):
         def __init__(self):
@@ -174,19 +182,14 @@ async def wordle(ctx):
         def bind_to(self, callback):
             self._observers.append(callback)
             print('bound')
-    class WordleClass(object):
-        def __init__(self, input):
-            self.input = input
-            self.input.bind_to(self.advanceWordle)
-        def advanceWordle(self, buttonNum):
-            print("wordle advanced")
+
     input = inputClass()
+    wordle = wordleClass(input)
     #Create Button Callbacks
     buttonsCallbacks = [0] * 28
     for i in range(len(buttons)):
         async def callback(interaction, i = i):
             input.buttonNum = i
-            print(input._buttonNum)
         buttonsCallbacks[i] = callback
         buttons[i].callback = buttonsCallbacks[i]
 
