@@ -22,12 +22,14 @@ def compare(word):
     for i in range(len(word)):
         if guess[i] == checkWord[i]:
             guess[i] = 0
+            checkWord[i] = 0
             hits.append(2)
         else:
             hits.append(0)
     for i in range(len(word)):
-        if guess[i] in checkWord:
+        if hits[i] != 2 and guess[i] in checkWord:
             hits[i] = 1
+            checkWord[checkWord.index(guess[i])] = 0
             guess[i] = 0
     return hits
 
@@ -76,7 +78,7 @@ def runRow(row):
             word.pop()
             letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
             img = addLetter(len(word) + 1, row + 1, letterImg)
-        ImageShow.show(img)
+        #ImageShow.show(img)
 
 def wordleSetup():
     print("running")
@@ -112,7 +114,7 @@ def wordleSetup():
 
     #Determines the answer word
     global answer
-    answer = answer_words_list[random.randrange(len(answer_words_list))]
+    answer = "crass"#answer_words_list[random.randrange(len(answer_words_list))]
 
 def main():
 

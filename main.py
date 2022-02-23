@@ -5,13 +5,17 @@ import csv
 import random
 import string
 import io
+import asyncio
+import nest_asyncio
+import IPython
 from discord.ui import Button, View
 from discord.ext import commands
-from PIL import Image, ImageShow
+from PIL import Image
 
 #Infrastructure
 token = "OTQyMjE3ODg2NDAxOTU3ODk4.YghSyQ.OQBVr3_pbyA-13bNdxVu8auVBzs"
 bot = commands.Bot(command_prefix = '=')
+nest_asyncio.apply()
 
 #Commands
 @bot.command()
@@ -55,10 +59,26 @@ async def wordle(ctx):
     global answer
     answer = answer_words_list[random.randrange(len(answer_words_list))]
 
-    #Send initial messages
+    #Send initial message
     file = discord.File(fp = mem, filename = 'blank.png')
-    await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
-    imgMsg = await ctx.send(file = file)
+    imgMsg = await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
+
+    #Function Definition
+    def runAsync(coroutine):
+        task = asyncio.create_task(coroutine)
+        asyncio.get_running_loop().run_until_complete(task)
+        return task.result()
+
+    async def editImgMsg(newImg):
+        mem = io.BytesIO()
+        newImg.save(mem, format='PNG')
+        mem.seek(0)
+        file = discord.File(fp = mem, filename = 'blank.png')
+        await imgMsg.edit(file = file)
+        return True
+
+    #Add the image to the initial message
+    await editImgMsg(img)
 
     #Create Wordle Class
     class wordleClass(object):
@@ -68,34 +88,43 @@ async def wordle(ctx):
             self.gameRow = 1
             self.img = img
             self.word = []
+            self.game = True
 
         def advanceWordle(self, buttonNum):
-            global buttonID
-            if buttonNum < 26:
-                buttonID = letters_list[buttonNum].upper()
-            elif buttonNum == 26:
-                buttonID = "Del"
-            elif buttonNum == 27:
-                buttonID = "Enter"
-            if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
-                checkWord = ''.join(self.word)
-                self.word = []
-                print(checkWord)
-                hits = wordle.compare(checkWord)
-                print(hits)
-                wordle.returnGuess(hits, checkWord, self.gameRow)
-                self.gameRow += 1
-            elif buttonID in letters_list and len(self.word) < 5:
-                self.word.append(buttonID.lower())
-                letterImg = wordle.createLetterImg("Gray", buttonID)
-                self.img= wordle.addLetter(len(self.word), self.gameRow, letterImg)
-            elif buttonID == 'Del' and len(self.word) > 0:
-                self.word.pop()
-                letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
-                self.img= wordle.addLetter(len(self.word) + 1, self.gameRow + 1, letterImg)
-            print(''.join(self.word))
-            ImageShow.show(self.img)
-            wordle.editImgMsg(self.img)
+            if self.game == True:
+                global buttonID
+                if buttonNum < 26:
+                    buttonID = letters_list[buttonNum].upper()
+                elif buttonNum == 26:
+                    buttonID = "Del"
+                elif buttonNum == 27:
+                    buttonID = "Enter"
+                print(buttonID)
+                buttons[buttonNum].disable = True
+                if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
+                    checkWord = ''.join(self.word)
+                    self.word = []
+                    print(checkWord)
+                    hits = wordle.compare(checkWord)
+                    print(hits)
+                    wordle.returnGuess(hits, checkWord, self.gameRow)
+                    self.gameRow += 1
+                    if self.gameRow == 7:
+                        runAsync(ctx.send("You did not get the Wordle. It was {0}".format(answer.upper())))
+                        self.game = False
+                        return
+
+                elif buttonID in letters_list and len(self.word) < 5:
+                    self.word.append(buttonID.lower())
+                    letterImg = wordle.createLetterImg("Gray", buttonID)
+                    self.img= wordle.addLetter(len(self.word), self.gameRow, letterImg)
+                elif buttonID == 'Del' and len(self.word) > 0:
+                    self.word.pop()
+                    letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
+                    self.img= wordle.addLetter(len(self.word) + 1, self.gameRow, letterImg)
+                print(''.join(self.word))
+                runAsync(editImgMsg(self.img))
+            else: pass
 
         def createLetterImg(self, color, letter):
             letterImg = Image.open("Images/Tiles/Wordle {0}/{1}.jpeg".format(color, letter))
@@ -115,12 +144,14 @@ async def wordle(ctx):
             for i in range(len(word)):
                 if guess[i] == checkWord[i]:
                     guess[i] = 0
+                    checkWord[i] = 0
                     hits.append(2)
                 else:
                     hits.append(0)
             for i in range(len(word)):
-                if guess[i] in checkWord:
+                if hits[i] != 2 and guess[i] in checkWord:
                     hits[i] = 1
+                    checkWord[checkWord.index(guess[i])] = 0
                     guess[i] = 0
             return hits
 
@@ -140,19 +171,9 @@ async def wordle(ctx):
                 else:
                     letterImg = wordle.createLetterImg("Gray", guess[i].upper())
                 self.img= wordle.addLetter(i + 1, cycle, letterImg)
-            ImageShow.show(self.img)
-
-        @staticmethod
-        def editImgMsg(newImg):
-            mem = io.BytesIO()
-            newImg.save(mem, format='PNG')
-            mem.seek(0)
-            file = discord.File(fp = mem, filename = 'blank.png')
-            imgMsg.edit(file = file)
 
     #Create input Class
     class inputClass(object): #This runs when an object is initialized with this class
-
         def __init__(self):
             self._buttonNum = 0
             self._observers = [] #This is a list of all the callbacks that are called when this object is updated
@@ -169,10 +190,6 @@ async def wordle(ctx):
 
         def bind_to(self, callback): #This is a function that objects can call to bind to this one.
             self._observers.append(callback) #They give it a callback to run and this object runs it in the setter on updates.
-
-    #Create Objects based on the classes
-    input = inputClass()
-    wordle = wordleClass(input)
 
     #Create Buttons
     x = 26
@@ -193,6 +210,10 @@ async def wordle(ctx):
     buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.grey)
     view.add_item(buttons[27])
     await ctx.send(view = view)
+
+    #Create Objects based on the classes
+    input = inputClass()
+    wordle = wordleClass(input)
 
     #Create Button Callbacks
     buttonsCallbacks = [0] * 28
