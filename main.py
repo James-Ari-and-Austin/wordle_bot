@@ -157,15 +157,39 @@ async def wordle(ctx):
     view.add_item(buttons[27])
     await ctx.send(view = view)
 
-    #Add function to the buttons
-    #async def button_callback(interaction):
-        #button_id = interaction.message
-        #await interaction.response.send_message("Button Pressed")
+    #Create input Class
+    class inputClass(object):
+        def __init__(self):
+            self._buttonNum = 0
+            self._observers = []
+        @property
+        def buttonNum(self):
+            return self._buttonNum
+        @buttonNum.setter
+        def buttonNum(self, value):
+            self._buttonNum = value
+            for callback in self._observers:
+                print('announcing change')
+                callback(self._buttonNum)
+        def bind_to(self, callback):
+            self._observers.append(callback)
+            print('bound')
+    class WordleClass(object):
+        def __init__(self, input):
+            self.input = input
+            self.input.bind_to(self.advanceWordle)
+        def advanceWordle(self, buttonNum):
+            print("wordle advanced")
+    input = inputClass()
+    #Create Button Callbacks
     buttonsCallbacks = [0] * 28
     for i in range(len(buttons)):
-        buttonsCallbacks[i] = lambda interaction, i = i: interaction.response.send_message("Button {0} pressed".format(i))
-
+        async def callback(interaction, i = i):
+            input.buttonNum = i
+            print(input._buttonNum)
+        buttonsCallbacks[i] = callback
         buttons[i].callback = buttonsCallbacks[i]
+
 
 def main():
     tracemalloc.start()
