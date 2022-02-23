@@ -50,8 +50,6 @@ async def wordle(ctx):
     for row in letters_csv:
         letter = str(row)[2:-2]
         letters_list.append(letter)
-    global word
-    word = []
 
     #Determines the answer word
     global answer
@@ -63,6 +61,8 @@ async def wordle(ctx):
             self.input = input
             self.input.bind_to(self.advanceWordle)
             self.gameRow = 1
+            self.img = img
+            self.word = []
 
         def advanceWordle(self, buttonNum):
             global buttonID
@@ -72,22 +72,24 @@ async def wordle(ctx):
                 buttonID = "Del"
             elif buttonNum == 27:
                 buttonID = "Enter"
-            print("ButtonID = {0}".format(buttonID))
-            if len(word) == 5 and ''.join(word) in guess_words_list and buttonID == 'Enter':
-                checkWord = ''.join(word)
+            if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
+                checkWord = ''.join(self.word)
+                self.word = []
                 print(checkWord)
+                hits = wordle.compare(checkWord)
+                print(hits)
+                wordle.returnGuess(hits, checkWord, self.gameRow)
                 self.gameRow += 1
-            elif buttonID in letters_list and len(word) < 5:
-                word.append(buttonID.lower())
+            elif buttonID in letters_list and len(self.word) < 5:
+                self.word.append(buttonID.lower())
                 letterImg = wordle.createLetterImg("Gray", buttonID)
-
-                img = wordle.addLetter(len(word), self.gameRow, letterImg)
-            elif buttonID == 'Del' and len(word) > 0:
-                word.pop()
+                self.img= wordle.addLetter(len(self.word), self.gameRow, letterImg)
+            elif buttonID == 'Del' and len(self.word) > 0:
+                self.word.pop()
                 letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
-                img = wordle.addLetter(len(word) + 1, self.gameRow + 1, letterImg)
-            print(''.join(word))
-            ImageShow.show(img)
+                self.img= wordle.addLetter(len(self.word) + 1, self.gameRow + 1, letterImg)
+            print(''.join(self.word))
+            ImageShow.show(self.img)
 
         def createLetterImg(self, color, letter):
             letterImg = Image.open("Images/Tiles/Wordle {0}/{1}.jpeg".format(color, letter))
@@ -97,7 +99,7 @@ async def wordle(ctx):
         def addLetter(self, column, row, letterImg):
             x = (column - 1) * 87 + 38
             y = (row - 1) * 87 + 43 + round((row * 0.55))
-            img.paste(letterImg, (x,y))
+            self.img.paste(letterImg, (x,y))
             return img
 
         def compare(self, word):
@@ -122,44 +124,17 @@ async def wordle(ctx):
             else:
                 return True
 
-        #def getGuess(self):
-            #end = False
-            #while end == False:
-                #guess = input()
-                #if guess ==  '.' or guess == ',':
-                    #return guess
-                #elif len(guess) != 1 or guess not in letters_list:
-                    #print("Word Error")
-                #else:
-                    #end = True
-            #return guess
-
         def returnGuess(self, hits, guess, cycle):
             for i in range(len(hits)):
                 if hits[i] == 2:
-                    letterImg = createLetterImg("Green", guess[i].upper())
+                    letterImg = wordle.createLetterImg("Green", guess[i].upper())
 
                 elif hits[i] == 1:
-                    letterImg = createLetterImg("Yellow", guess[i].upper())
+                    letterImg = wordle.createLetterImg("Yellow", guess[i].upper())
                 else:
-                    letterImg = createLetterImg("Gray", guess[i].upper())
-                img = addLetter(i + 1, cycle + 1, letterImg)
-            ImageShow.show(img)
-
-        def runRow(self, row, word, letter):
-                guess = letter
-                if len(word) == 5 and ''.join(word) in guess_words_list and guess == '.':
-                    return ''.join(word)
-                elif guess in letters_list and len(word) < 5:
-                    guess = guess.upper()
-                    word.append(guess.lower())
-                    letterImg = createLetterImg("Gray", guess)
-                    img = addLetter(len(word), row + 1, letterImg)
-                elif guess == ',' and len(word) > 0:
-                    word.pop()
-                    letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
-                    img = addLetter(len(word) + 1, row + 1, letterImg)
-                ImageShow.show(img)
+                    letterImg = wordle.createLetterImg("Gray", guess[i].upper())
+                self.img= wordle.addLetter(i + 1, cycle, letterImg)
+            ImageShow.show(self.img)
 
     #Create input Class
     class inputClass(object): #This runs when an object is initialized with this class
