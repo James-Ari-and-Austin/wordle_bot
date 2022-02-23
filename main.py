@@ -8,6 +8,7 @@ import io
 import asyncio
 import nest_asyncio
 import IPython
+import math
 from discord.ui import Button, View
 from discord.ext import commands
 from PIL import Image
@@ -80,6 +81,47 @@ async def wordle(ctx):
     #Add the image to the initial message
     await editImgMsg(img)
 
+    #Create Buttons
+    x = 26
+    buttons = [0] * 28
+    buttonMsgs = []
+    for i in range(5):
+        view = View()
+        for i in range(5):
+            buttons[x - 26] = Button(label = letters_list[x], style = discord.ButtonStyle.green)
+            view.add_item(buttons[x - 26])
+            x += 1
+        buttonMsg = await ctx.send(view = view)
+        buttonMsgs.append(buttonMsg)
+    #Print last line
+    view = View()
+    buttons[25] = Button(label = "Z", style = discord.ButtonStyle.green)
+    view.add_item(buttons[25])
+    buttons[26] = Button(label = "Del", style = discord.ButtonStyle.grey)
+    view.add_item(buttons[26])
+    buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.grey)
+    view.add_item(buttons[27])
+    buttonMsg = await ctx.send(view = view)
+    buttonMsgs.append(buttonMsg)
+
+    async def editButton(buttonNum, color):
+        if color == "red":
+            buttons[buttonNum].style = discord.ButtonStyle.red
+        if color == "green":
+            buttons[buttonNum].style = discord.ButtonStyle.green
+        if color == "gray":
+            buttons[buttonNum].style = discord.ButtonStyle.gray
+        if color == "blurple":
+            buttons[buttonNum].style = discord.ButtonStyle.blurple
+        buttonRow = math.trunc((buttonNum / 5))
+        buttonColumn = buttonNum % 5
+        view = View.from_message(buttonMsgs[buttonRow])
+        for i in range(len(view.children)): #Binds the new buttons to the callbacks of the old buttonsCallbacks
+            view.children[i].callback = buttonsCallbacks[((buttonRow) * 5) + i]
+        view.children[buttonColumn].style = discord.ButtonStyle.red
+        await buttonMsgs[buttonRow].edit(view = view)
+        return True
+
     #Create Wordle Class
     class wordleClass(object):
         def __init__(self, input):
@@ -100,7 +142,7 @@ async def wordle(ctx):
                 elif buttonNum == 27:
                     buttonID = "Enter"
                 print(buttonID)
-                buttons[buttonNum].disable = True
+                runAsync(editButton(buttonNum, "red"))
                 if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
                     checkWord = ''.join(self.word)
                     self.word = []
@@ -177,12 +219,12 @@ async def wordle(ctx):
         def __init__(self):
             self._buttonNum = 0
             self._observers = [] #This is a list of all the callbacks that are called when this object is updated
-        @property #A property is something you can reference in order to get the variable everything is going to subscribe to I think
 
+        @property #A property is something you can reference in order to get the variable everything is going to subscribe to I think
         def buttonNum(self):
             return self._buttonNum
-        @buttonNum.setter #This calls the functions in _observers for the earlier defined property.
 
+        @buttonNum.setter #This calls the functions in _observers for the earlier defined property.
         def buttonNum(self, value):
             self._buttonNum = value
             for callback in self._observers:
@@ -190,26 +232,6 @@ async def wordle(ctx):
 
         def bind_to(self, callback): #This is a function that objects can call to bind to this one.
             self._observers.append(callback) #They give it a callback to run and this object runs it in the setter on updates.
-
-    #Create Buttons
-    x = 26
-    buttons = [0] * 28
-    for i in range(5):
-        view = View()
-        for i in range(5):
-            buttons[x - 26] = Button(label = letters_list[x], style = discord.ButtonStyle.green)
-            view.add_item(buttons[x - 26])
-            x += 1
-        await ctx.send(view = view)
-    #Print last line
-    view = View()
-    buttons[25] = Button(label = "Z", style = discord.ButtonStyle.green)
-    view.add_item(buttons[25])
-    buttons[26] = Button(label = "Del", style = discord.ButtonStyle.grey)
-    view.add_item(buttons[26])
-    buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.grey)
-    view.add_item(buttons[27])
-    await ctx.send(view = view)
 
     #Create Objects based on the classes
     input = inputClass()
@@ -222,6 +244,7 @@ async def wordle(ctx):
             input.buttonNum = i
         buttonsCallbacks[i] = callback
         buttons[i].callback = buttonsCallbacks[i]
+        #Initiate recoloring of the button
 
 def main():
     tracemalloc.start()
