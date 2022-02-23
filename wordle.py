@@ -78,8 +78,8 @@ def runRow(row):
             img = addLetter(len(word) + 1, row + 1, letterImg)
         ImageShow.show(img)
 
-def main():
-
+def wordleSetup():
+    print("running")
     #Create the Blank Image
     global img
     img = Image.open("Images/WordleTemplate.jpeg")
@@ -113,6 +113,10 @@ def main():
     #Determines the answer word
     global answer
     answer = answer_words_list[random.randrange(len(answer_words_list))]
+
+def main():
+
+    wordleSetup()
 
     #Runs the game, row by row
     for row in range(6):

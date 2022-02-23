@@ -1,21 +1,165 @@
 #Import Libraries
 import discord
-import wordle
+import tracemalloc
+import csv
+import random
+import string
+import io
+from discord.ui import Button, View
+from discord.ext import commands
+from PIL import Image, ImageShow
 
-#Variable Definition
+#Infrastructure Setup
 token = "OTQyMjE3ODg2NDAxOTU3ODk4.YghSyQ.OQBVr3_pbyA-13bNdxVu8auVBzs"
-client = discord.Client()
+bot = commands.Bot(command_prefix = '=')
 
-@client.event
-async def on_ready():
-    print('Logged in as {0}'.format(client.user))
+#Wordle Game Functions
+def createLetterImg(color, letter):
+    letterImg = Image.open("Images/Tiles/Wordle {0}/{1}.jpeg".format(color, letter))
+    letterImg = letterImg.resize((77,76))
+    return letterImg
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    if message.clean_content == "wordle":
-        await message.channel.send("wordle time")
-    #await message.channel.send("Message Recieved")
+def addLetter(column, row, letterImg):
+    x = (column - 1) * 87 + 38
+    y = (row - 1) * 87 + 43 + round((row * 0.55))
+    img.paste(letterImg, (x,y))
+    return img
 
-client.run(token)
+def compare(word):
+    checkWord = list(answer)
+    guess = list(word)
+    hits = []
+    for i in range(len(word)):
+        if guess[i] == checkWord[i]:
+            guess[i] = 0
+            hits.append(2)
+        else:
+            hits.append(0)
+    for i in range(len(word)):
+        if guess[i] in checkWord:
+            hits[i] = 1
+            guess[i] = 0
+    return hits
+
+def checkWin(hits):
+    if 0 in hits or 1 in hits:
+        return False
+    else:
+        return True
+
+def getGuess():
+    end = False
+    while end == False:
+        guess = input()
+        if guess ==  '.' or guess == ',':
+            return guess
+        elif len(guess) != 1 or guess not in letters_list:
+            print("Word Error")
+        else:
+            end = True
+    return guess
+
+def returnGuess(hits, guess, cycle):
+    for i in range(len(hits)):
+        if hits[i] == 2:
+            letterImg = createLetterImg("Green", guess[i].upper())
+
+        elif hits[i] == 1:
+            letterImg = createLetterImg("Yellow", guess[i].upper())
+        else:
+            letterImg = createLetterImg("Gray", guess[i].upper())
+        img = addLetter(i + 1, cycle + 1, letterImg)
+    ImageShow.show(img)
+
+def runRow(row):
+    word = []
+    while True:
+        guess = getGuess()
+        if len(word) == 5 and ''.join(word) in guess_words_list and guess == '.':
+            return ''.join(word)
+        elif guess in letters_list and len(word) < 5:
+            guess = guess.upper()
+            word.append(guess.lower())
+            letterImg = createLetterImg("Gray", guess)
+            img = addLetter(len(word), row + 1, letterImg)
+        elif guess == ',' and len(word) > 0:
+            word.pop()
+            letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
+            img = addLetter(len(word) + 1, row + 1, letterImg)
+        ImageShow.show(img)
+
+def wordleSetup():
+    #Create the Blank Image and saves to memory
+    global img
+    img = Image.open("Images/WordleTemplate.jpeg")
+    global mem
+    mem = io.BytesIO()
+    img.save(mem, format='PNG')
+    mem.seek(0)
+
+    #Open the Word CSVs
+    file = open("word_libraries/answer_words.csv")
+    answer_words_csv = csv.reader(file)
+    file = open("word_libraries/guess_words.csv")
+    guess_words_csv = csv.reader(file)
+    file = open("word_libraries/letters.csv")
+    letters_csv = csv.reader(file)
+
+    #Create the Word Lists
+    global answer_words_list
+    answer_words_list = []
+    global guess_words_list
+    guess_words_list = []
+    global letters_list
+    letters_list = []
+    for row in answer_words_csv:
+        word = str(row)[2:-2]
+        answer_words_list.append(word)
+        guess_words_list.append(word)
+    for row in guess_words_csv:
+        word = str(row)[2:-2]
+        guess_words_list.append(word)
+    for row in letters_csv:
+        letter = str(row)[2:-2]
+        letters_list.append(letter)
+
+    #Determines the answer word
+    global answer
+    answer = answer_words_list[random.randrange(len(answer_words_list))]
+
+#Commands
+@bot.command()
+async def wordle(ctx):
+    await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
+    x = 26
+    wordleSetup()
+    #send the blank image
+    file = discord.File(fp = mem, filename = 'blank.png')
+    await ctx.send(file = file)
+    #Print all but last line
+    for i in range(5):
+        view = View()
+        for i in range(5):
+            button = Button(label = letters_list[x], style = discord.ButtonStyle.green)
+            view.add_item(button)
+            x += 1
+        await ctx.send(view = view)
+    #Print last line
+    view = View()
+    button = Button(label = "Z", style = discord.ButtonStyle.green)
+    view.add_item(button)
+    button = Button(label = "Delete", style = discord.ButtonStyle.grey)
+    view.add_item(button)
+    button = Button(label = "Enter", style = discord.ButtonStyle.grey)
+    view.add_item(button)
+    await ctx.send(view = view)
+
+
+
+
+def main():
+    tracemalloc.start()
+    bot.run(token)
+
+if __name__ == "__main__":
+    main()
