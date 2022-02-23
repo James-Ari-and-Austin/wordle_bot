@@ -130,32 +130,42 @@ def wordleSetup():
 #Commands
 @bot.command()
 async def wordle(ctx):
-    await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
-    x = 26
     wordleSetup()
-    #send the blank image
+
+    #Send initial Message
     file = discord.File(fp = mem, filename = 'blank.png')
-    await ctx.send(file = file)
-    #Print all but last line
+    await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
+    imgMsg = await ctx.send(file = file)
+
+    #Create Buttons
+    x = 26
+    buttons = [0] * 28
     for i in range(5):
         view = View()
         for i in range(5):
-            button = Button(label = letters_list[x], style = discord.ButtonStyle.green)
-            view.add_item(button)
+            buttons[x - 26] = Button(label = letters_list[x], style = discord.ButtonStyle.green)
+            view.add_item(buttons[x - 26])
             x += 1
         await ctx.send(view = view)
     #Print last line
     view = View()
-    button = Button(label = "Z", style = discord.ButtonStyle.green)
-    view.add_item(button)
-    button = Button(label = "Delete", style = discord.ButtonStyle.grey)
-    view.add_item(button)
-    button = Button(label = "Enter", style = discord.ButtonStyle.grey)
-    view.add_item(button)
+    buttons[25] = Button(label = "Z", style = discord.ButtonStyle.green)
+    view.add_item(buttons[25])
+    buttons[26] = Button(label = "Del", style = discord.ButtonStyle.grey)
+    view.add_item(buttons[26])
+    buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.grey)
+    view.add_item(buttons[27])
     await ctx.send(view = view)
 
+    #Add function to the buttons
+    #async def button_callback(interaction):
+        #button_id = interaction.message
+        #await interaction.response.send_message("Button Pressed")
+    buttonsCallbacks = [0] * 28
+    for i in range(len(buttons)):
+        buttonsCallbacks[i] = lambda interaction, i = i: interaction.response.send_message("Button {0} pressed".format(i))
 
-
+        buttons[i].callback = buttonsCallbacks[i]
 
 def main():
     tracemalloc.start()
