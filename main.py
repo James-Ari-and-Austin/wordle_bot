@@ -81,7 +81,7 @@ async def wordle(ctx):
 
     #Create Buttons
     x = 26
-    buttons = [0] * 28
+    buttons = [0] * 29
     buttonMsgs = []
     for i in range(5):
         view = View()
@@ -99,6 +99,8 @@ async def wordle(ctx):
     view.add_item(buttons[26])
     buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.gray)
     view.add_item(buttons[27])
+    buttons[28] = Button(label = "Quit", style = discord.ButtonStyle.gray)
+    view.add_item(buttons[28])
     buttonMsg = await ctx.send(view = view)
     buttonMsgs.append(buttonMsg)
 
@@ -142,9 +144,11 @@ async def wordle(ctx):
                 if buttonNum < 26:
                     buttonID = letters_list[buttonNum].upper()
                 elif buttonNum == 26:
-                    buttonID = "Del"
+                    buttonID = "Delete"
                 elif buttonNum == 27:
                     buttonID = "Enter"
+                elif buttonNum == 28:
+                    buttonID = "Quit"
                 #runAsync(editButton(buttonNum, 2))
                 if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
                     checkWord = ''.join(self.word)
@@ -165,10 +169,14 @@ async def wordle(ctx):
                     self.word.append(buttonID.lower())
                     letterImg = wordle.createLetterImg("Gray", buttonID)
                     self.img= wordle.addLetter(len(self.word), self.gameRow, letterImg)
-                elif buttonID == 'Del' and len(self.word) > 0:
+                elif buttonID == 'Delete' and len(self.word) > 0:
                     self.word.pop()
                     letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
                     self.img= wordle.addLetter(len(self.word) + 1, self.gameRow, letterImg)
+                elif buttonID == 'Quit':
+                    runAsync(ctx.send("You gave up on your Wordle! It was {0}".format(answer.upper())))
+                    self.game = False
+                    return
                 runAsync(editImgMsg(self.img))
             else: pass
 
@@ -236,7 +244,7 @@ async def wordle(ctx):
     wordle = wordleClass(input)
 
     #Create Button Callbacks
-    buttonsCallbacks = [0] * 28
+    buttonsCallbacks = [0] * 29
     for i in range(len(buttons)):
         async def callback(interaction, i = i):
             if interaction.user.id == ctx.message.author.id:
