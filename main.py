@@ -149,7 +149,6 @@ async def wordle(ctx):
                 elif buttonNum == 27:
                     buttonID = "Enter"
                 #runAsync(editButton(buttonNum, 2))
-                print(answer)
                 if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
                     checkWord = ''.join(self.word)
                     hits = wordle.compare(checkWord)
@@ -173,7 +172,6 @@ async def wordle(ctx):
                     self.word.pop()
                     letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
                     self.img= wordle.addLetter(len(self.word) + 1, self.gameRow, letterImg)
-                print(''.join(self.word))
                 runAsync(editImgMsg(self.img))
             else: pass
 
