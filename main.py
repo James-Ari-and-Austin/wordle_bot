@@ -24,9 +24,7 @@ nest_asyncio.apply()
 async def wordle(ctx):
 
     #Create the Blank Image and saves to memory
-    global img
     img = Image.open("Images/WordleTemplate.jpeg")
-    global mem
     mem = io.BytesIO()
     img.save(mem, format='PNG')
     mem.seek(0)
@@ -58,7 +56,6 @@ async def wordle(ctx):
         letters_list.append(letter)
 
     #Determines the answer word
-    global answer
     answer = answer_words_list[random.randrange(len(answer_words_list))]
 
     #Send initial message
@@ -242,10 +239,10 @@ async def wordle(ctx):
     buttonsCallbacks = [0] * 28
     for i in range(len(buttons)):
         async def callback(interaction, i = i):
-            input.buttonNum = i
+            if interaction.user.id == ctx.message.author.id:
+                input.buttonNum = i
         buttonsCallbacks[i] = callback
         buttons[i].callback = buttonsCallbacks[i]
-        #Initiate recoloring of the button
 
 def main():
     tracemalloc.start()
