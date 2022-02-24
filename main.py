@@ -88,39 +88,45 @@ async def wordle(ctx):
     for i in range(5):
         view = View()
         for i in range(5):
-            buttons[x - 26] = Button(label = letters_list[x], style = discord.ButtonStyle.green)
+            buttons[x - 26] = Button(label = letters_list[x], style = discord.ButtonStyle.gray)
             view.add_item(buttons[x - 26])
             x += 1
         buttonMsg = await ctx.send(view = view)
         buttonMsgs.append(buttonMsg)
     #Print last line
     view = View()
-    buttons[25] = Button(label = "Z", style = discord.ButtonStyle.green)
+    buttons[25] = Button(label = "Z", style = discord.ButtonStyle.gray)
     view.add_item(buttons[25])
-    buttons[26] = Button(label = "Del", style = discord.ButtonStyle.grey)
+    buttons[26] = Button(label = "Del", style = discord.ButtonStyle.gray)
     view.add_item(buttons[26])
-    buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.grey)
+    buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.gray)
     view.add_item(buttons[27])
     buttonMsg = await ctx.send(view = view)
     buttonMsgs.append(buttonMsg)
 
-    async def editButton(buttonNum, color):
-        if color == "red":
-            buttons[buttonNum].style = discord.ButtonStyle.red
-        if color == "green":
-            buttons[buttonNum].style = discord.ButtonStyle.green
-        if color == "gray":
-            buttons[buttonNum].style = discord.ButtonStyle.gray
-        if color == "blurple":
-            buttons[buttonNum].style = discord.ButtonStyle.blurple
-        buttonRow = math.trunc((buttonNum / 5))
-        buttonColumn = buttonNum % 5
-        view = View.from_message(buttonMsgs[buttonRow])
-        for i in range(len(view.children)): #Binds the new buttons to the callbacks of the old buttonsCallbacks
-            view.children[i].callback = buttonsCallbacks[((buttonRow) * 5) + i]
-        view.children[buttonColumn].style = discord.ButtonStyle.red
-        await buttonMsgs[buttonRow].edit(view = view)
-        return True
+    #Create  dictionary containing letters and their status
+    letterStatus = [-1] * 26
+
+    async def editButton(buttonNum, hitStat):
+        if letterStatus[buttonNum] < hitStat:
+            letterStatus[buttonNum] = hitStat
+            buttonRow = math.trunc((buttonNum / 5))
+            rowLetterStatus = []
+            view = View.from_message(buttonMsgs[buttonRow])
+            for i in range(len(view.children)):
+                rowLetterStatus.append(letterStatus[(buttonRow * 5) + i])
+            for i in range(len(rowLetterStatus)):
+                if rowLetterStatus[i] == 2:
+                    view.children[i].style = discord.ButtonStyle.green
+                elif rowLetterStatus[i] == 1:
+                    view.children[i].style = discord.ButtonStyle.blurple
+                elif rowLetterStatus[i] == 0:
+                    view.children[i].style = discord.ButtonStyle.red
+                view.children[i].callback = buttonsCallbacks[((buttonRow) * 5) + i] #Binds the new buttons to their callback
+            await buttonMsgs[buttonRow].edit(view = view)
+            return True
+        else: pass
+
 
     #Create Wordle Class
     class wordleClass(object):
@@ -141,21 +147,23 @@ async def wordle(ctx):
                     buttonID = "Del"
                 elif buttonNum == 27:
                     buttonID = "Enter"
-                print(buttonID)
-                runAsync(editButton(buttonNum, "red"))
+                #runAsync(editButton(buttonNum, 2))
+                print(answer)
                 if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
                     checkWord = ''.join(self.word)
-                    self.word = []
-                    print(checkWord)
                     hits = wordle.compare(checkWord)
-                    print(hits)
+                    for i in range(len(hits)):
+                        runAsync(editButton(letters_list.index(self.word[i]), hits[i]))
+                    self.word = []
+                    if 0 not in hits and 1 not in hits: #Win Condition
+                        runAsync(ctx.send("Congratulations: You got the Wordle in {0} attempts!".format(self.gameRow + 1)))
+                        self.game = False
                     wordle.returnGuess(hits, checkWord, self.gameRow)
                     self.gameRow += 1
                     if self.gameRow == 7:
                         runAsync(ctx.send("You did not get the Wordle. It was {0}".format(answer.upper())))
                         self.game = False
                         return
-
                 elif buttonID in letters_list and len(self.word) < 5:
                     self.word.append(buttonID.lower())
                     letterImg = wordle.createLetterImg("Gray", buttonID)
