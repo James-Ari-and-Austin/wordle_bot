@@ -95,7 +95,7 @@ async def wordle(ctx):
     view = View()
     buttons[25] = Button(label = "Z", style = discord.ButtonStyle.gray)
     view.add_item(buttons[25])
-    buttons[26] = Button(label = "Del", style = discord.ButtonStyle.gray)
+    buttons[26] = Button(label = "Delete", style = discord.ButtonStyle.gray)
     view.add_item(buttons[26])
     buttons[27] = Button(label = "Enter", style = discord.ButtonStyle.gray)
     view.add_item(buttons[27])
