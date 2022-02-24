@@ -4,6 +4,7 @@ import tracemalloc
 import csv
 import random
 import string
+import time
 import io
 import asyncio
 import nest_asyncio
@@ -21,7 +22,16 @@ nest_asyncio.apply()
 
 #Commands
 @bot.command()
+async def learn(ctx):
+    await ctx.send("Wordle is a very simply game to play.", file = discord.File("Images/Tutorial.jpg"))
+
+@bot.command()
 async def wordle(ctx):
+
+    #Create the thread the game is played in
+    threadName = "{0}'s Wordle Game".format(str(ctx.author)[:-5])
+    thread = await ctx.message.channel.create_thread(name = threadName, message = ctx.message)
+    await thread.send(content = "Test Message")
 
     #Create the Blank Image and saves to memory
     img = Image.open("Images/WordleTemplate.jpeg")
@@ -61,7 +71,7 @@ async def wordle(ctx):
 
     #Send initial message
     file = discord.File(fp = mem, filename = 'blank.png')
-    imgMsg = await ctx.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
+    imgMsg = await thread.send("{0}'s Wordle Game:".format(str(ctx.author)[:-5]))
 
     #Function Definition
     def runAsync(coroutine):
@@ -69,7 +79,7 @@ async def wordle(ctx):
         asyncio.get_running_loop().run_until_complete(task)
         return task.result()
 
-    async def editImgMsg(newImg):
+    async def editMsgImg(newImg):
         mem = io.BytesIO()
         newImg.save(mem, format='PNG')
         mem.seek(0)
@@ -77,8 +87,12 @@ async def wordle(ctx):
         await imgMsg.edit(file = file)
         return True
 
+    async def shutdownThread(secs):
+        time.sleep(secs)
+        await thread.delete()
+
     #Add the image to the initial message
-    await editImgMsg(img)
+    await editMsgImg(img)
 
     #Create Buttons
     x = 26
@@ -90,7 +104,7 @@ async def wordle(ctx):
             buttons[x - 26] = Button(label = letters_list[x], style = discord.ButtonStyle.gray)
             view.add_item(buttons[x - 26])
             x += 1
-        buttonMsg = await ctx.send(view = view)
+        buttonMsg = await thread.send(view = view)
         buttonMsgs.append(buttonMsg)
     #Print last line
     view = View()
@@ -102,7 +116,7 @@ async def wordle(ctx):
     view.add_item(buttons[27])
     buttons[28] = Button(label = "Quit", style = discord.ButtonStyle.gray)
     view.add_item(buttons[28])
-    buttonMsg = await ctx.send(view = view)
+    buttonMsg = await thread.send(view = view)
     buttonMsgs.append(buttonMsg)
 
     #Create  dictionary containing letters and their status
@@ -150,7 +164,6 @@ async def wordle(ctx):
                     buttonID = "Enter"
                 elif buttonNum == 28:
                     buttonID = "Quit"
-                #runAsync(editButton(buttonNum, 2))
                 if len(self.word) == 5 and ''.join(self.word) in guess_words_list and buttonID == 'Enter':
                     checkWord = ''.join(self.word)
                     hits = wordle.compare(checkWord)
@@ -158,13 +171,16 @@ async def wordle(ctx):
                         runAsync(editButton(letters_list.index(self.word[i]), hits[i]))
                     self.word = []
                     if 0 not in hits and 1 not in hits: #Win Condition
-                        runAsync(ctx.send("Congratulations: You got the Wordle in {0} attempts!".format(self.gameRow)))
+                        runAsync(imgMsg.edit(content = "Congratulations: You got the Wordle in {0} attempts!".format(self.gameRow)))
+                        runAsync(shutdownThread(15))
+                        thread.send("This thread will delete in 15 seconds! Make sure to save your wordle!")
                         self.game = False
                     wordle.returnGuess(hits, checkWord, self.gameRow)
                     self.gameRow += 1
                     if self.gameRow == 7:
-                        runAsync(ctx.send("You did not get the Wordle. It was {0}".format(answer.upper())))
+                        runAsync(imgMsg.edit(content = "You did not get the Wordle. It was {0}".format(answer.upper())))
                         self.game = False
+                        runAsync(shutdownThread(5))
                         return
                 elif buttonID in letters_list and len(self.word) < 5:
                     self.word.append(buttonID.lower())
@@ -175,10 +191,11 @@ async def wordle(ctx):
                     letterImg = Image.open("Images/Tiles/Wordle Blank/blank.jpeg")
                     self.img= wordle.addLetter(len(self.word) + 1, self.gameRow, letterImg)
                 elif buttonID == 'Quit':
-                    runAsync(ctx.send("You gave up on your Wordle! It was {0}".format(answer.upper())))
+                    runAsync(imgMsg.edit(content = "You gave up on your Wordle! It was {0}".format(answer.upper())))
                     self.game = False
+                    runAsync(shutdownThread(5))
                     return
-                runAsync(editImgMsg(self.img))
+                runAsync(editMsgImg(self.img))
             else: pass
 
         def createLetterImg(self, color, letter):
