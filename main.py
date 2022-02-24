@@ -14,7 +14,8 @@ from discord.ext import commands
 from PIL import Image
 
 #Infrastructure
-token = "OTQyMjE3ODg2NDAxOTU3ODk4.YghSyQ.OQBVr3_pbyA-13bNdxVu8auVBzs"
+with open('token.txt') as tkn:
+    token = tkn.readlines()[0]
 bot = commands.Bot(command_prefix = '=')
 nest_asyncio.apply()
 
@@ -204,12 +205,6 @@ async def wordle(ctx):
                     checkWord[checkWord.index(guess[i])] = 0
                     guess[i] = 0
             return hits
-
-        def checkWin(self, hits):
-            if 0 in hits or 1 in hits:
-                return False
-            else:
-                return True
 
         def returnGuess(self, hits, guess, cycle):
             for i in range(len(hits)):
