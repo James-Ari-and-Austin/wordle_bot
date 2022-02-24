@@ -156,7 +156,7 @@ async def wordle(ctx):
                         runAsync(editButton(letters_list.index(self.word[i]), hits[i]))
                     self.word = []
                     if 0 not in hits and 1 not in hits: #Win Condition
-                        runAsync(ctx.send("Congratulations: You got the Wordle in {0} attempts!".format(self.gameRow + 1)))
+                        runAsync(ctx.send("Congratulations: You got the Wordle in {0} attempts!".format(self.gameRow)))
                         self.game = False
                     wordle.returnGuess(hits, checkWord, self.gameRow)
                     self.gameRow += 1
