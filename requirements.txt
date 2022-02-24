@@ -1,11 +1,6 @@
-git+https://github.com/Pycord-Development/pycord
-discord == 1.7.3
-discord.py == 1.7.3
-asyncio
-py-cord == 2.0.0b4
+discord
 nest_asyncio
-IPython == 8.0.1
-discord.ui
-pillow == 8.1.2
-async-timeout  == 3.0.1
-#py -m pip install --upgrade --no-deps --force-reinstall git+https://github.com/Pycord-Development/pycord
+IPython
+py-cord
+#Known issue where discord does not contain all necessary modules. 
+#I got around this by copying the discord module from my linux VM onto my host machine.
