@@ -57,6 +57,7 @@ async def wordle(ctx):
 
     #Determines the answer word
     answer = answer_words_list[random.randrange(len(answer_words_list))]
+    print(answer)
 
     #Send initial message
     file = discord.File(fp = mem, filename = 'blank.png')
@@ -105,7 +106,7 @@ async def wordle(ctx):
     buttonMsgs.append(buttonMsg)
 
     #Create  dictionary containing letters and their status
-    letterStatus = [-1] * 26
+    letterStatus = [-1] * 29
 
     async def editButton(buttonNum, hitStat):
         if letterStatus[buttonNum] < hitStat:
@@ -113,7 +114,7 @@ async def wordle(ctx):
             buttonRow = math.trunc((buttonNum / 5))
             rowLetterStatus = []
             view = View.from_message(buttonMsgs[buttonRow])
-            for i in range(len(view.children)):
+            for i in range(len(view.children)): #glitch caused with letter z because adding quit button increased length of view.children
                 rowLetterStatus.append(letterStatus[(buttonRow * 5) + i])
             for i in range(len(rowLetterStatus)):
                 if rowLetterStatus[i] == 2:
