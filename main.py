@@ -235,7 +235,7 @@ async def wordle(ctx):
     input = inputClass()
     wordle = wordleClass(input)
 
-    #Create Button Callbacks
+    #Create Button Callback Functions
     buttonsCallbacks = [0] * 28
     for i in range(len(buttons)):
         async def callback(interaction, i = i):
