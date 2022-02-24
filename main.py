@@ -30,7 +30,9 @@ async def wordle(ctx):
 
     #Create the thread the game is played in
     threadName = "{0}'s Wordle Game".format(str(ctx.author)[:-5])
-    thread = await ctx.message.channel.create_thread(name = threadName, message = ctx.message)
+    #thread = 0
+    try: thread = await ctx.message.channel.create_thread(name = threadName, message = ctx.message, auto_archive_duration = 60)
+    except: await ctx.send("You cannot initiate a game of Wordle outside of a channel!")
     await thread.send(content = "Test Message")
 
     #Create the Blank Image and saves to memory
