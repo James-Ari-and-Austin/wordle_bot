@@ -33,7 +33,6 @@ async def wordle(ctx):
     #thread = 0
     try: thread = await ctx.message.channel.create_thread(name = threadName, message = ctx.message, auto_archive_duration = 60)
     except: await ctx.send("You cannot initiate a game of Wordle outside of a channel!")
-    await thread.send(content = "Test Message")
 
     #Create the Blank Image and saves to memory
     img = Image.open("Images/WordleTemplate.jpeg")
@@ -69,7 +68,7 @@ async def wordle(ctx):
 
     #Determines the answer word
     answer = answer_words_list[random.randrange(len(answer_words_list))]
-    print(answer)
+    print("{0}'s answer is {1}".format(str(ctx.author)[:-5], answer.upper()))
 
     #Send initial message
     file = discord.File(fp = mem, filename = 'blank.png')
@@ -144,7 +143,6 @@ async def wordle(ctx):
             return True
         else: pass
 
-
     #Create Wordle Class
     class wordleClass(object):
         def __init__(self, input):
@@ -173,9 +171,11 @@ async def wordle(ctx):
                         runAsync(editButton(letters_list.index(self.word[i]), hits[i]))
                     self.word = []
                     if 0 not in hits and 1 not in hits: #Win Condition
+                        wordle.returnGuess(hits, checkWord, self.gameRow)
+                        runAsync(editMsgImg(self.img))
                         runAsync(imgMsg.edit(content = "Congratulations: You got the Wordle in {0} attempts!".format(self.gameRow)))
-                        runAsync(shutdownThread(15))
-                        thread.send("This thread will delete in 15 seconds! Make sure to save your wordle!")
+                        runAsync(thread.send("This thread will delete soon! Make sure to save your wordle!"))
+                        runAsync(shutdownThread(30))
                         self.game = False
                     wordle.returnGuess(hits, checkWord, self.gameRow)
                     self.gameRow += 1
