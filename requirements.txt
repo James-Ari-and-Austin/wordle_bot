@@ -2,5 +2,6 @@ discord
 nest_asyncio
 IPython
 py-cord
+pillow
 #Known issue where discord does not contain all necessary modules. 
 #I got around this by copying the discord module from my linux VM onto my host machine.
